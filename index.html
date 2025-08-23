@@ -2,102 +2,244 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Glow Toy</title>
+  <title>Glow — Zero‑Build Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
-    #chat { border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: auto; white-space: pre-wrap; }
-    .user { font-weight: bold; margin-top: 0.5rem; }
-    .assistant { margin-top: 0.5rem; }
+    :root { --bg:#fff; --ink:#0b1020; --muted:#6b7280; --card:#fff; --line:#e5e7eb }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--ink)}
+    .wrap{min-height:100vh; padding:24px; display:flex; flex-direction:column; gap:24px}
+    .grid{display:grid; gap:24px; grid-template-columns:1fr}
+    @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr} }
+    .card{background:var(--card); border:1px solid var(--line); border-radius:24px; box-shadow:0 8px 24px rgba(0,0,0,.05); padding:20px}
+    .h2{font-size:20px; font-weight:700; margin:0 0 6px}
+    .muted{color:var(--muted)}
+    .row{display:flex; align-items:center; gap:12px; padding:6px 0}
+    .label{width:220px; font-size:14px; color:#374151}
+    .num{width:28px; text-align:center; font-variant-numeric:tabular-nums; color:#374151}
+    .slider{width:220px}
+    .avatarWrap{display:flex; flex-direction:column; align-items:center; user-select:none}
+    .chat{display:flex; flex-direction:column; gap:10px; min-height:200px; margin:10px 0; max-height:300px; overflow-y:auto}
+    .bubble{max-width:75%; padding:10px 14px; border-radius:16px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word}
+    .user{align-self:flex-end; background:#f3f4f6}
+    .assistant{align-self:flex-start; background:#fff; border:1px solid var(--line)}
+    .inputRow{display:flex; gap:8px; align-items:center}
+    .inputRow input[type="text"]{flex:1; padding:12px 14px; border:1px solid var(--line); border-radius:999px; font-size:15px}
+    .btn{padding:10px 14px; border:none; background:#111; color:#fff; border-radius:999px; cursor:pointer}
+    .btn.sec{background:#f3f4f6; color:#111; border:1px solid var(--line)}
+    .stack{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .tiny{font-size:12px; color:var(--muted)}
   </style>
 </head>
 <body>
-  <h1>Glow Toy Chat</h1>
-  <div id="chat"></div>
-  <div style="margin-top:1rem;">
-    <input id="prompt" type="text" placeholder="Say something…" style="width:75%;" />
-    <button id="send">Send</button>
+<div class="wrap">
+  <div class="stack">
+    <div class="h2">Glow — Zero‑Build Demo</div>
+    <div class="tiny">Deployed via serverless proxy. API key is safe on the server.</div>
   </div>
 
-  <script>
-    const chatEl = document.getElementById("chat");
-    const promptEl = document.getElementById("prompt");
-    const sendBtn = document.getElementById("send");
+  <div class="grid">
+    <!-- Avatar -->
+    <div class="card" style="text-align:center">
+      <div class="h2">Glow Avatar Playground</div>
+      <div id="avatar" class="avatarWrap"></div>
+    </div>
 
-    let messages = [];
+    <!-- Traits -->
+    <div class="card">
+      <div class="h2" style="margin-bottom:8px">Traits</div>
+      <div class="row"><div class="label">Empathy (warm ↔ cool)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
+      <div class="row"><div class="label">Logic (intuition ↔ rational)</div><input id="logic" class="slider" type="range" min="0" max="5" step="1"><div id="numLog" class="num">2</div></div>
+      <div class="row"><div class="label">Playfulness (earth ↔ neon)</div><input id="play" class="slider" type="range" min="0" max="5" step="1"><div id="numPlay" class="num">3</div></div>
+      <div class="row"><div class="label">Confidence (neutral ↔ smile)</div><input id="conf" class="slider" type="range" min="0" max="5" step="1"><div id="numConf" class="num">3</div></div>
+    </div>
+  </div>
 
-    function append(role, text) {
-      const div = document.createElement("div");
-      div.className = role;
-      div.textContent = (role === "user" ? "You: " : "AI: ") + text;
-      chatEl.appendChild(div);
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
+  <!-- Chat -->
+  <div class="card">
+    <div class="h2">Chat</div>
+    <div id="chat" class="chat"></div>
+    <div class="inputRow">
+      <input id="prompt" type="text" placeholder="Say something…" />
+      <button class="btn" id="send">▶</button>
+      <button class="btn sec" id="clear">Clear Chat</button>
+    </div>
+  </div>
+</div>
 
-    sendBtn.onclick = async () => {
-      const text = promptEl.value.trim();
-      if (!text) return;
-      promptEl.value = "";
-      append("user", text);
-      messages.push({ role: "user", content: text });
+<script>
+  // --------- tiny state helpers ----------
+  const LS = { traits:"glow_traits_local", msgs:"glow_msgs_local" };
+  const $ = (q) => document.querySelector(q);
+  const save = (k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const load = (k,f)=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch{return f}};
 
-      try {
-        const resp = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: messages,
-            temperature: 0.7
-          })
-        });
-
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let buffer = "";
-        let aiText = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const parts = buffer.split("\n\n");
-          buffer = parts.pop();
-
-          for (const part of parts) {
-            if (part.startsWith("data: ")) {
-              const data = part.replace("data: ", "").trim();
-              if (data === "[DONE]") continue;
-              try {
-                const json = JSON.parse(data);
-                const delta = json.choices[0].delta?.content;
-                if (delta) {
-                  aiText += delta;
-                  if (!document.getElementById("streaming")) {
-                    const div = document.createElement("div");
-                    div.id = "streaming";
-                    div.className = "assistant";
-                    div.textContent = "AI: ";
-                    chatEl.appendChild(div);
-                  }
-                  document.getElementById("streaming").textContent = "AI: " + aiText;
-                  chatEl.scrollTop = chatEl.scrollHeight;
-                }
-              } catch {}
-            }
-          }
-        }
-
-        // finalize
-        if (aiText) {
-          document.getElementById("streaming").removeAttribute("id");
-          messages.push({ role: "assistant", content: aiText });
-        }
-      } catch (err) {
-        console.error("Error:", err);
-        append("assistant", "[error]");
-      }
+  // --------- avatar math ----------
+  const MAX = 5;
+  const clamp=(n,min=0,max=MAX)=>Math.max(min,Math.min(max,n));
+  function seedFromTraits(t){
+    const empathyW = clamp(t.empathy)/MAX;
+    const rational = clamp(t.logic)/MAX;
+    const conf = clamp(t.confidence)/MAX;
+    const playful = clamp(t.playfulness)/MAX;
+    const hue = Math.round(30 * (1 - empathyW) + 210 * empathyW);
+    const sat = Math.round(50 + playful * 45);
+    const lig = Math.round(50 + playful * 12 - empathyW * 5);
+    return {
+      fill: `hsl(${hue}, ${sat}%, ${lig}%)`,
+      r: Math.min(90, Math.round(90 - rational * 82)),
+      eyes: rational > 0.66 ? "squares" : rational > 0.33 ? "ovals" : "dots",
+      smile: conf >= 0.34,
+      smileAmt: 4 + conf * 16,
+      smileLift: conf * 8,
+      glow: 8 + Math.round(conf * 12),
     };
-  </script>
+  }
+  function renderAvatar(t){
+    const s = seedFromTraits(t);
+    const id = Math.random().toString(36).slice(2);
+    const eye = (x) =>
+      s.eyes==="squares" ? `<rect x="${x-9}" y="92" width="18" height="18" rx="2" fill="#0b1020"/>` :
+      s.eyes==="ovals"   ? `<ellipse cx="${x}" cy="101" rx="9" ry="7.5" fill="#0b1020"/>` :
+                           `<circle cx="${x}" cy="101" r="7.5" fill="#0b1020"/>`;
+    const mouth = s.smile
+      ? `M80 ${145 - s.smileLift} Q120 ${145 + s.smileAmt - s.smileLift} 160 ${145 - s.smileLift}`
+      : `M92 142 H148`;
+    $("#avatar").innerHTML = `
+      <svg width="360" height="360" viewBox="0 0 240 240" role="img" aria-label="Glow avatar">
+        <defs>
+          <linearGradient id="ov-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.02"/>
+          </linearGradient>
+          <filter id="f-${id}" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="${s.glow}" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="${s.fill}" filter="url(#f-${id})"/>
+        <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="url(#ov-${id})" pointer-events="none"/>
+        ${eye(90)} ${eye(150)}
+        <path d="${mouth}" stroke="#0b1020" stroke-width="10" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div class="muted" style="margin-top:8px">Glow is a personal AI assistant with adjustable personality parameters. Just input your preferences and enjoy!</div>
+    `;
+  }
+
+  // --------- init traits + wire sliders ----------
+  const traits = load(LS.traits, { empathy:3, logic:2, playfulness:3, confidence:3 });
+  $("#empathy").value = traits.empathy; $("#numEmp").textContent = traits.empathy;
+  $("#logic").value   = traits.logic;   $("#numLog").textContent = traits.logic;
+  $("#play").value    = traits.playfulness; $("#numPlay").textContent = traits.playfulness;
+  $("#conf").value    = traits.confidence;  $("#numConf").textContent = traits.confidence;
+  renderAvatar(traits);
+  function bindSlider(id, numKey, k){
+    const el = $(id), num = $(numKey);
+    el.addEventListener("input", e=>{
+      traits[k] = parseInt(e.target.value,10); num.textContent = traits[k];
+      save(LS.traits, traits); renderAvatar(traits);
+    });
+  }
+  bindSlider("#empathy","#numEmp","empathy");
+  bindSlider("#logic","#numLog","logic");
+  bindSlider("#play","#numPlay","playfulness");
+  bindSlider("#conf","#numConf","confidence");
+
+  // --------- chat state ----------
+  const chatEl = $("#chat");
+  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Try chatting with me!" }]);
+  const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
+  function repaint() {
+    chatEl.innerHTML = msgs.map(renderMsg).join("");
+    chatEl.scrollTop = chatEl.scrollHeight; // auto-scroll
+  }
+  repaint();
+
+  // --------- streaming chat via /api/chat ----------
+  let streaming = false;
+  let lastChunk = ""; // safety: skip identical back-to-back chunks
+
+  async function send(){
+    if (streaming) return; // lock
+    const input = $("#prompt");
+    const t = (input.value || "").trim();
+    if (!t) return;
+
+    // prepare UI
+    input.value = "";
+    msgs.push({ role:"user", text:t }, { role:"assistant", text:"" });
+    save(LS.msgs, msgs); repaint();
+    lastChunk = "";
+
+    // Build Chat Completions history
+    const history = msgs.map(m => ({ role: m.role, content: m.text }));
+
+    try {
+      streaming = true;
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          stream: true,
+          messages: history,
+          temperature: 0.7
+        })
+      });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const ev of events) {
+          if (!ev.startsWith("data:")) continue;
+          const json = ev.slice(5).trim();
+          if (!json || json === "[DONE]") continue;
+
+          try {
+            const pkt = JSON.parse(json);
+            const delta = pkt?.choices?.[0]?.delta?.content || "";
+            if (!delta) continue;
+            if (delta === lastChunk) continue; // skip duplicates
+            lastChunk = delta;
+
+            const last = msgs[msgs.length - 1];
+            if (last && last.role === "assistant") last.text += delta;
+
+            save(LS.msgs, msgs); repaint();
+          } catch {}
+        }
+      }
+    } catch (e) {
+      const last = msgs[msgs.length - 1];
+      if (last && last.role === "assistant") last.text = last.text || "⚠️ Error receiving response.";
+      save(LS.msgs, msgs); repaint();
+      console.error(e);
+    } finally {
+      streaming = false;
+    }
+  }
+
+  $("#send").onclick = send;
+  $("#prompt").addEventListener("keydown", (e)=>{
+    if (e.key === "Enter" && !e.repeat) { e.preventDefault(); send(); }
+  });
+  $("#clear").onclick = ()=>{
+    msgs.length = 0;
+    msgs.push({ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Try chatting with me!" });
+    localStorage.removeItem(LS.msgs);
+    repaint();
+  };
+</script>
 </body>
 </html>
