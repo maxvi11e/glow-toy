@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Glow — Zero-Build Demo</title>
+  <title>Glow - Custom LLM Build Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { --bg:#fff; --ink:#0b1020; --muted:#6b7280; --card:#fff; --line:#e5e7eb }
@@ -11,7 +11,7 @@
     .wrap{min-height:100vh; padding:24px; display:flex; flex-direction:column; gap:24px}
     .grid{display:grid; gap:24px; grid-template-columns:1fr}
     @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr} }
-    .card{background:var(--card); border:1px solid var(--line); border-radius:24px; box-shadow:0 8px 24px rgba(0,0,0,.05); padding:20px}
+    .card{background:var(--card); border:none; border-radius:24px; box-shadow:0 8px 24px rgba(0,0,0,.05); padding:20px}
     .h2{font-size:20px; font-weight:700; margin:0 0 6px}
     .muted{color:var(--muted)}
     .row{display:flex; align-items:center; gap:12px; padding:6px 0}
@@ -34,24 +34,23 @@
 <body>
 <div class="wrap">
   <div class="stack">
-    <div class="h2">Glow — Zero-Build Demo</div>
-    <div class="tiny">Deployed via serverless proxy. API key is safe on the server.</div>
+    <div class="h2">Glow AI</div>
+    <div class="tiny">Personalized LLM Avatar - Demo</div>
   </div>
 
   <div class="grid">
     <!-- Avatar -->
     <div class="card" style="text-align:center">
-      <div class="h2">Glow Avatar Playground</div>
       <div id="avatar" class="avatarWrap"></div>
     </div>
 
     <!-- Traits -->
     <div class="card">
       <div class="h2" style="margin-bottom:8px">Traits</div>
-      <div class="row"><div class="label">Empathy (warm ↔ cool)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
-      <div class="row"><div class="label">Logic (intuition ↔ rational)</div><input id="logic" class="slider" type="range" min="0" max="5" step="1"><div id="numLog" class="num">2</div></div>
-      <div class="row"><div class="label">Playfulness (earth ↔ neon)</div><input id="play" class="slider" type="range" min="0" max="5" step="1"><div id="numPlay" class="num">3</div></div>
-      <div class="row"><div class="label">Confidence (neutral ↔ smile)</div><input id="conf" class="slider" type="range" min="0" max="5" step="1"><div id="numConf" class="num">3</div></div>
+      <div class="row"><div class="label">Empathy (cool ↔ warm)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
+      <div class="row"><div class="label">Logic (intuitive ↔ rational)</div><input id="logic" class="slider" type="range" min="0" max="5" step="1"><div id="numLog" class="num">2</div></div>
+      <div class="row"><div class="label">Playfulness (serious ↔ fun)</div><input id="play" class="slider" type="range" min="0" max="5" step="1"><div id="numPlay" class="num">3</div></div>
+      <div class="row"><div class="label">Confidence (reserved ↔ bold)</div><input id="conf" class="slider" type="range" min="0" max="5" step="1"><div id="numConf" class="num">3</div></div>
     </div>
   </div>
 
@@ -77,14 +76,21 @@
   // --------- avatar math ----------
   const MAX = 5;
   const clamp=(n,min=0,max=MAX)=>Math.max(min,Math.min(max,n));
+
   function seedFromTraits(t){
-    const empathyW = clamp(t.empathy)/MAX;
+    // Empathy inverted: higher = warmer
+    const empathyW = clamp(t.empathy)/MAX; // 0 = cool, 5 = warm
     const rational = clamp(t.logic)/MAX;
     const conf = clamp(t.confidence)/MAX;
     const playful = clamp(t.playfulness)/MAX;
-    const hue = Math.round(30 * (1 - empathyW) + 210 * empathyW);
+
+    // Hue: 210 (cool blue) → 30 (warm orange) as empathy increases
+    const hue = Math.round(210 * (1 - empathyW) + 30 * empathyW);
+
+    // Keep saturation tied to playfulness; make warmer slightly darker (same intent as original, now applied to warmness)
     const sat = Math.round(50 + playful * 45);
     const lig = Math.round(50 + playful * 12 - empathyW * 5);
+
     return {
       fill: `hsl(${hue}, ${sat}%, ${lig}%)`,
       r: Math.min(90, Math.round(90 - rational * 82)),
@@ -95,16 +101,20 @@
       glow: 8 + Math.round(conf * 12),
     };
   }
+
   function renderAvatar(t){
     const s = seedFromTraits(t);
     const id = Math.random().toString(36).slice(2);
+
     const eye = (x) =>
       s.eyes==="squares" ? `<rect x="${x-9}" y="92" width="18" height="18" rx="2" fill="#0b1020"/>` :
       s.eyes==="ovals"   ? `<ellipse cx="${x}" cy="101" rx="9" ry="7.5" fill="#0b1020"/>` :
                            `<circle cx="${x}" cy="101" r="7.5" fill="#0b1020"/>`;
+
     const mouth = s.smile
       ? `M80 ${145 - s.smileLift} Q120 ${145 + s.smileAmt - s.smileLift} 160 ${145 - s.smileLift}`
       : `M92 142 H148`;
+
     $("#avatar").innerHTML = `
       <svg width="360" height="360" viewBox="0 0 240 240" role="img" aria-label="Glow avatar">
         <defs>
@@ -122,7 +132,6 @@
         ${eye(90)} ${eye(150)}
         <path d="${mouth}" stroke="#0b1020" stroke-width="10" stroke-linecap="round" fill="none"/>
       </svg>
-      <div class="muted" style="margin-top:8px">Glow is a personal AI assistant with adjustable personality parameters. Just input your preferences and enjoy!</div>
     `;
   }
 
@@ -133,11 +142,14 @@
   $("#play").value    = traits.playfulness; $("#numPlay").textContent = traits.playfulness;
   $("#conf").value    = traits.confidence;  $("#numConf").textContent = traits.confidence;
   renderAvatar(traits);
+
   function bindSlider(id, numKey, k){
     const el = $(id), num = $(numKey);
     el.addEventListener("input", e=>{
-      traits[k] = parseInt(e.target.value,10); num.textContent = traits[k];
-      save(LS.traits, traits); renderAvatar(traits);
+      traits[k] = parseInt(e.target.value,10);
+      num.textContent = traits[k];
+      save(LS.traits, traits);
+      renderAvatar(traits);
     });
   }
   bindSlider("#empathy","#numEmp","empathy");
@@ -147,7 +159,7 @@
 
   // --------- chat state ----------
   const chatEl = $("#chat");
-  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Try chatting with me!" }]);
+  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Adjust the sliders to change my appearance and conversation style!" }]);
   const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
   function repaint() {
     chatEl.innerHTML = msgs.map(renderMsg).join("");
@@ -157,7 +169,7 @@
 
   // --------- traits → system message ----------
   function traitsSystemMessage(t){
-    // Small, clear mapping so output style shifts noticeably
+    // Higher empathy = warmer tone words
     const empathyMap = ["terse","brisk","balanced","warm","caring","nurturing"][t.empathy];
     const logicMap = ["intuitive","casual","balanced","structured","analytical","formal"][t.logic];
     const playMap = ["grounded","plain","spry","colorful","playful","whimsical"][t.playfulness];
