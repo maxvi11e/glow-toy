@@ -151,9 +151,27 @@
   const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
   function repaint() {
     chatEl.innerHTML = msgs.map(renderMsg).join("");
-    chatEl.scrollTop = chatEl.scrollHeight;
+    chatEl.scrollTop = chatEl.scrollHeight; // auto-scroll
   }
   repaint();
+
+  // --------- traits → system message ----------
+  function traitsSystemMessage(t){
+    // Small, clear mapping so output style shifts noticeably
+    const empathyMap = ["terse","brisk","balanced","warm","caring","nurturing"][t.empathy];
+    const logicMap = ["intuitive","casual","balanced","structured","analytical","formal"][t.logic];
+    const playMap = ["grounded","plain","spry","colorful","playful","whimsical"][t.playfulness];
+    const confMap = ["neutral","soft","balanced","assured","confident","upbeat"][t.confidence];
+
+    return `Adopt this style:
+- Tone: ${empathyMap}, ${confMap}
+- Reasoning: ${logicMap}
+- Flair: ${playMap}
+Constraints:
+- Keep answers concise.
+- Match user vibe; don't overdo persona.
+- If asked for steps, give one step at a time.`;
+  }
 
   // --------- streaming chat via /api/chat ----------
   let streaming = false;
@@ -170,7 +188,11 @@
     save(LS.msgs, msgs); repaint();
     lastChunk = "";
 
-    const history = msgs.map(m => ({ role: m.role, content: m.text }));
+    // Build history with system message derived from sliders
+    const history = [
+      { role: "system", content: traitsSystemMessage(traits) },
+      ...msgs.map(m => ({ role: m.role, content: m.text }))
+    ];
 
     try {
       streaming = true;
