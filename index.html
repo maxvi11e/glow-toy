@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Glow — Zero‑Build Demo</title>
+  <title>Glow — Zero-Build Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { --bg:#fff; --ink:#0b1020; --muted:#6b7280; --card:#fff; --line:#e5e7eb }
@@ -34,7 +34,7 @@
 <body>
 <div class="wrap">
   <div class="stack">
-    <div class="h2">Glow — Zero‑Build Demo</div>
+    <div class="h2">Glow — Zero-Build Demo</div>
     <div class="tiny">Deployed via serverless proxy. API key is safe on the server.</div>
   </div>
 
@@ -151,27 +151,25 @@
   const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
   function repaint() {
     chatEl.innerHTML = msgs.map(renderMsg).join("");
-    chatEl.scrollTop = chatEl.scrollHeight; // auto-scroll
+    chatEl.scrollTop = chatEl.scrollHeight;
   }
   repaint();
 
   // --------- streaming chat via /api/chat ----------
   let streaming = false;
-  let lastChunk = ""; // safety: skip identical back-to-back chunks
+  let lastChunk = "";
 
   async function send(){
-    if (streaming) return; // lock
+    if (streaming) return;
     const input = $("#prompt");
     const t = (input.value || "").trim();
     if (!t) return;
 
-    // prepare UI
     input.value = "";
     msgs.push({ role:"user", text:t }, { role:"assistant", text:"" });
     save(LS.msgs, msgs); repaint();
     lastChunk = "";
 
-    // Build Chat Completions history
     const history = msgs.map(m => ({ role: m.role, content: m.text }));
 
     try {
@@ -210,7 +208,7 @@
             const pkt = JSON.parse(json);
             const delta = pkt?.choices?.[0]?.delta?.content || "";
             if (!delta) continue;
-            if (delta === lastChunk) continue; // skip duplicates
+            if (delta === lastChunk) continue;
             lastChunk = delta;
 
             const last = msgs[msgs.length - 1];
