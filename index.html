@@ -216,60 +216,29 @@
     // Build OpenAI-style history
     const history = msgs.map(m => ({ role: m.role, content: m.text }));
 
-    try {
-      streaming = true;
-      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + apiKey,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          stream: true,
-          messages: history
-        })
-      });
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      if (!resp.body) throw new Error("No response body");
+try {
+  const resp = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: messages,   // use your existing messages array
+      temperature: 0.7
+    })
+  });
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder("utf-8");
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-
-        for (const ev of events) {
-          if (!ev.startsWith("data:")) continue;
-          const json = ev.slice(5).trim();
-          if (!json || json === "[DONE]") continue;
-
-          try {
-            const pkt = JSON.parse(json);
-
-            // SINGLE-SOURCE: only accept Chat Completions delta
-            const delta = (pkt && pkt.choices && pkt.choices[0] && pkt.choices[0].delta && pkt.choices[0].delta.content) || "";
-            if (!delta) continue;
-
-            // safety net: skip identical back-to-back
-            if (delta === lastChunk) continue;
-            lastChunk = delta;
-
-            // append to last assistant message
-            const last = msgs[msgs.length - 1];
-            if (last && last.role === "assistant") last.text += delta;
-
-            save(LS.msgs, msgs);
-            repaint();
-          } catch { /* ignore partials */ }
-        }
-      }
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    // your existing SSE parsing / append-to-chat logic here
+  }
+} catch (err) {
+  console.error("Error calling /api/chat:", err);
+}
     } catch (e) {
       const last = msgs[msgs.length - 1];
       if (last && last.role === "assistant") last.text = last.text || "⚠️ Error receiving response.";
