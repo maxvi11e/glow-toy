@@ -11,17 +11,8 @@
 
     /* Layout */
     .wrap{min-height:100vh; padding:16px; display:flex; flex-direction:column; gap:16px}
-
-    /* Grid: stack on mobile; 2 centered columns (560px max) on desktop */
-    .grid{display:grid; gap:16px; grid-template-columns:1fr}
-    @media(min-width:900px){
-      .grid{
-        grid-template-columns: repeat(2, minmax(0, 560px));
-        justify-content: center;   /* center both columns as a unit */
-        justify-items: stretch;
-      }
-    }
-    .grid.single{grid-template-columns:1fr; justify-items:center} /* When traits minimized: center avatar */
+    .grid{display:grid; gap:16px; grid-template-columns:1fr}              /* Mobile: stack avatar + traits */
+    @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr} }       /* Desktop: 2 columns */
 
     /* Cards / Text */
     .card{background:var(--card); border:none; border-radius:24px; box-shadow:0 8px 24px rgba(0,0,0,.05); padding:20px; width:100%}
@@ -32,14 +23,10 @@
     .hidden{display:none}
 
     /* Avatar */
-    .avatarCard{max-width:560px; width:100%}
     .avatarWrap{display:flex; flex-direction:column; align-items:center; user-select:none; width:100%}
-    .avatarWrap svg{width:100%; height:auto; max-width:560px}
+    .avatarWrap svg{width:100%; height:auto; max-width:560px} /* Full-width on mobile, nicely capped */
 
-    /* Traits (match avatar width on desktop) */
-    .traitsCard{max-width:560px; width:100%}
-
-    /* Trait rows */
+    /* Traits rows */
     .row{display:flex; align-items:center; gap:12px; padding:6px 0; flex-wrap:wrap}
     .label{flex:1; font-size:14px; color:#374151; min-width:140px}
     .num{width:28px; text-align:center; font-variant-numeric:tabular-nums; color:#374151}
@@ -57,14 +44,6 @@
     .user{align-self:flex-end; background:#f3f4f6}
     .assistant{align-self:flex-start; background:#fff; border:1px solid var(--line)}
     @media(max-width:600px){ .bubble{max-width:100%} }
-
-    /* Put near your other CSS */
-    .chatContainer{ margin-inline:auto; }  /* center it */
-
-    @media(min-width:900px){
-      .chatContainer{ max-width: calc(560px * 2 + 16px); }   /* 2 cols (560) + 16px gap = 1136px */
-    }
-
 
     /* Input row — compact, single-line, proportional */
     .inputRow{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
@@ -90,20 +69,9 @@
     }
     .btn.sec{background:#f3f4f6; color:#111; border:1px solid var(--line)}
 
-    /* Card header + minimize button */
+    /* Traits header with toggle */
     .cardHeader{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
     .btn.tiny{height:auto; padding:6px 10px; font-size:13px; line-height:1; border-radius:999px}
-
-    /* Floating restore button (top-right) */
-    .fab{
-      position:fixed;
-      right:16px;
-      top:16px;     /* moved from bottom to top */
-      z-index:1000;
-      box-shadow:0 8px 24px rgba(0,0,0,.15);
-      padding:10px 14px;
-      border-radius:999px;
-    }
   </style>
 </head>
 <body>
@@ -113,19 +81,17 @@
     <div class="tiny">Personalized LLM Avatar - Demo</div>
   </div>
 
-  <!-- Avatar + Traits -->
-  <div class="grid" id="cardsGrid">
-    <!-- Avatar -->
-    <div class="card avatarCard" style="text-align:center">
+  <div class="grid">
+    <!-- Avatar (responsive full-width on mobile) -->
+    <div class="card" style="text-align:center">
       <div id="avatar" class="avatarWrap"></div>
     </div>
 
-    <!-- Traits (minimizable) -->
-    <div class="card traitsCard" id="traitsCard">
+    <!-- Traits (toggle visibility) -->
+    <div class="card">
       <div class="cardHeader">
         <div class="h2" style="margin:0">Traits</div>
-        <!-- Minimize the entire card -->
-        <button id="minimizeTraits" class="btn sec tiny" title="Minimize">━</button>
+<button id="toggleTraits" class="btn sec tiny">▶</button>
       </div>
       <div id="traitsContent">
         <div class="row"><div class="label">Empathy (cool ↔ warm)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
@@ -136,57 +102,45 @@
     </div>
   </div>
 
-  <!-- Chat -->
-<div class="card chatContainer" style="flex:1">
+  <!-- Chat (full-width card below; compact, single-line input) -->
+  <div class="card" style="flex:1">
     <div class="h2">Chat</div>
     <div id="chat" class="chat"></div>
     <div class="inputRow">
       <input id="prompt" type="text" placeholder="Say something…" />
-      <button class="btn" id="send">▶</button>
       <button class="btn sec" id="clear">Clear Chat</button>
+      <button class="btn" id="send">▶</button>
+      
     </div>
   </div>
 </div>
 
-<!-- Floating restore button (only visible when traits are minimized) -->
-<button id="restoreTraits" class="btn sec fab hidden" title="Show Traits">⚙</button>
-
 <script>
   // --------- tiny state helpers ----------
-  const LS = { traits:"glow_traits_local", msgs:"glow_msgs_local", traitsMin:"glow_traits_minimized" };
+  const LS = { traits:"glow_traits_local", msgs:"glow_msgs_local", traitsHidden:"glow_traits_hidden" };
   const $ = (q) => document.querySelector(q);
   const save = (k,v)=>localStorage.setItem(k, JSON.stringify(v));
   const load = (k,f)=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch{return f}};
 
-  // --------- minimize/restore Traits (persisted) ----------
-  const traitsCard = $("#traitsCard");
-  const restoreTraits = $("#restoreTraits");
-  const grid = $("#cardsGrid");
-  const minimizeBtn = $("#minimizeTraits");
-  let minimized = load(LS.traitsMin, false);
-
-  function applyMinState(){
-    if(minimized){
-      traitsCard.classList.add("hidden");
-      restoreTraits.classList.remove("hidden");
-      grid.classList.add("single");   // center avatar when only one column
-    }else{
-      traitsCard.classList.remove("hidden");
-      restoreTraits.classList.add("hidden");
-      grid.classList.remove("single");
+  // --------- traits toggle (persisted) ----------
+  const toggleBtn = $("#toggleTraits");
+  const traitsContent = $("#traitsContent");
+  let hidden = load(LS.traitsHidden, false);
+  function applyHiddenState(){
+    if (hidden){
+      traitsContent.classList.add("hidden");
+      toggleBtn.textContent = "▼";
+    } else {
+      traitsContent.classList.remove("hidden");
+      toggleBtn.textContent = "━";
     }
   }
-  minimizeBtn.addEventListener("click", ()=>{
-    minimized = true;
-    applyMinState();
-    save(LS.traitsMin, minimized);
+  toggleBtn.addEventListener("click", ()=>{
+    hidden = !hidden;
+    applyHiddenState();
+    save(LS.traitsHidden, hidden);
   });
-  restoreTraits.addEventListener("click", ()=>{
-    minimized = false;
-    applyMinState();
-    save(LS.traitsMin, minimized);
-  });
-  applyMinState();
+  applyHiddenState();
 
   // --------- avatar math ----------
   const MAX = 5;
