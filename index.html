@@ -53,6 +53,13 @@
 
     /* Chat */
     .chat{display:flex; flex-direction:column; gap:10px; min-height:220px; margin:10px 0; max-height:50vh; overflow-y:auto}
+    .chat {
+          min-height:180px;
+          max-height:220px;    /* scroll after ~6–8 lines */
+          overflow-y:auto;
+          }
+
+
     .bubble{max-width:75%; padding:10px 14px; border-radius:16px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word}
     .user{align-self:flex-end; background:#f3f4f6}
     .assistant{align-self:flex-start; background:#fff; border:1px solid var(--line)}
@@ -104,6 +111,37 @@
       padding:10px 14px;
       border-radius:999px;
     }
+
+
+
+  /*increase size of floating restore button*/
+
+
+    .avatarCard{ 
+      position: relative;   /* now children can be placed inside */
+      max-width:560px; 
+      width:100%; 
+    }
+
+    #restoreTraits{
+      position: absolute;
+      top: 15%;
+      right: 30px;       /* half its width outward */
+      transform: translateY(-50%);
+      font-size: 28px;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+    }
+
+
+    #restoreTraits{
+  font-size: 28px;      /* bigger icon */
+  width: 50px;          /* twice 38px */
+  height: 50px;         /* twice 38px */
+}
+
+
   </style>
 </head>
 <body>
@@ -116,9 +154,10 @@
   <!-- Avatar + Traits -->
   <div class="grid" id="cardsGrid">
     <!-- Avatar -->
-    <div class="card avatarCard" style="text-align:center">
-      <div id="avatar" class="avatarWrap"></div>
-    </div>
+<div class="card avatarCard" style="text-align:center">
+  <div id="avatar" class="avatarWrap"></div>
+  <button id="restoreTraits" class="btn sec hidden" title="Show Traits">⚙</button>
+</div>
 
     <!-- Traits (minimizable) -->
     <div class="card traitsCard" id="traitsCard">
@@ -142,8 +181,8 @@
     <div id="chat" class="chat"></div>
     <div class="inputRow">
       <input id="prompt" type="text" placeholder="Say something…" />
-      <button class="btn" id="send">▶</button>
       <button class="btn sec" id="clear">Clear Chat</button>
+      <button class="btn" id="send">▶</button>
     </div>
   </div>
 </div>
