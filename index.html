@@ -147,19 +147,19 @@
       </div>
       <div id="traitsContent">
         <div class="row">
-          <div class="label">Logic</div>
+          <div class="label">Logic (intuitive ↔ rational)</div>
           <input id="logic" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Empathy</div>
+          <div class="label">Empathy (cool ↔ warm)</div>
           <input id="empathy" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Playfulness</div>
+          <div class="label">Playfulness (serious ↔ fun)</div>
           <input id="play" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Confidence</div>
+          <div class="label">Confidence (reserved ↔ bold)</div>
           <input id="conf" class="slider" type="range" min="0" max="5" step="1">
         </div>
       </div>
@@ -423,7 +423,7 @@ Constraints:
   });
   $("#clear").onclick = ()=>{
     msgs.length = 0;
-    msgs.push({ role:"assistant", text:"Hey 👋 I’m your custom assistant. Try chatting with me!" });
+    msgs.push({ role:"assistant", text:"Hey 👋 I’m your personalizeable AI assistant. Try chatting with me!" });
     localStorage.removeItem(LS.msgs);
     repaint();
   };
