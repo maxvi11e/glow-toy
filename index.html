@@ -147,19 +147,19 @@
       </div>
       <div id="traitsContent">
         <div class="row">
-          <div class="label">Logic (intuitive ↔ rational)</div>
+          <div class="label">Logic</div>
           <input id="logic" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Empathy (cool ↔ warm)</div>
+          <div class="label">Empathy</div>
           <input id="empathy" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Playfulness (serious ↔ fun)</div>
+          <div class="label">Playfulness</div>
           <input id="play" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
-          <div class="label">Confidence (reserved ↔ bold)</div>
+          <div class="label">Confidence</div>
           <input id="conf" class="slider" type="range" min="0" max="5" step="1">
         </div>
       </div>
@@ -315,7 +315,7 @@
 
   // --------- chat state ----------
   const chatEl = $("#chat");
-  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hello! I’m your custom AI assistant 🚀. Adjust the sliders to change my appearance and conversation style." }]);
+  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hello! I’m your personalizeable AI assistant. Adjust the sliders to change my appearance and conversation style." }]);
   const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
   function repaint() {
     chatEl.innerHTML = msgs.map(renderMsg).join("");
