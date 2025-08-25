@@ -2,15 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Glow - Custom LLM Build Demo</title>
+  <title>Custom LLM Build Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+
+
+
     :root { --bg:#fff; --ink:#0b1020; --muted:#6b7280; --card:#fff; --line:#e5e7eb }
     *{box-sizing:border-box} html,body{height:100%}
     body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--ink)}
 
     /* Layout */
     .wrap{min-height:100vh; padding:16px; display:flex; flex-direction:column; gap:16px}
+
+
 
     /* Grid: stack on mobile; 2 centered columns (560px max) on desktop */
     .grid{display:grid; gap:16px; grid-template-columns:1fr}
@@ -142,13 +147,22 @@
 }
 
 
+
+
   </style>
+
+
+
 </head>
 <body>
+
+<body>
+
+
 <div class="wrap">
   <div class="stack">
-    <div class="h2">Glow AI</div>
-    <div class="tiny">Personalized LLM Avatar - Demo</div>
+    <div class="h2">Parameterized LLM Avatar</div>
+    <div class="tiny">Demo</div>
   </div>
 
   <!-- Avatar + Traits -->
@@ -314,7 +328,7 @@
 
   // --------- chat state ----------
   const chatEl = $("#chat");
-  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Adjust the sliders to change my appearance and conversation style!" }]);
+  const msgs = load(LS.msgs, [{ role:"assistant", text:"Hello! I’m your personal AI assistant 🚀. Adjust the sliders to change my appearance and conversation style." }]);
   const renderMsg = (m)=>`<div class="bubble ${m.role}">${m.text.replace(/</g,"&lt;")}</div>`;
   function repaint() {
     chatEl.innerHTML = msgs.map(renderMsg).join("");
@@ -422,10 +436,13 @@ Constraints:
   });
   $("#clear").onclick = ()=>{
     msgs.length = 0;
-    msgs.push({ role:"assistant", text:"Hey 👋 I’m your Glow avatar. Try chatting with me!" });
+    msgs.push({ role:"assistant", text:"Hey 👋 I’m your avatar. Try chatting with me!" });
     localStorage.removeItem(LS.msgs);
     repaint();
   };
 </script>
+
+
+
 </body>
 </html>
