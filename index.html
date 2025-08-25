@@ -48,7 +48,7 @@
     .row{display:flex; align-items:center; gap:12px; padding:6px 0; flex-wrap:wrap}
     .label{flex:1; font-size:14px; color:#374151; min-width:140px}
     .num{width:28px; text-align:center; font-variant-numeric:tabular-nums; color:#374151}
-    .slider{flex:2; min-width:160px}
+    .slider{flex: 0 0 50%; }
     @media(max-width:600px){
       .row{flex-direction:column; align-items:stretch}
       .label{min-width:0}
@@ -146,6 +146,9 @@
   height: 50px;         /* twice 38px */
 }
 
+.avatarWrap svg { width: 80% !important; height: auto; }
+
+
 
 
 
@@ -161,7 +164,7 @@
 
 <div class="wrap">
   <div class="stack">
-    <div class="h2">Parameterized LLM Avatar</div>
+    <div class="h2">Parameterized LLM Assistant</div>
     <div class="tiny">Demo</div>
   </div>
 
@@ -170,7 +173,11 @@
     <!-- Avatar -->
 <div class="card avatarCard" style="text-align:center">
   <div id="avatar" class="avatarWrap"></div>
-  <button id="restoreTraits" class="btn sec hidden" title="Show Traits">▶</button>
+  <button id="restoreTraits" class="btn sec iconBtn hidden" title="Show Traits">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
+    </svg>
+  </button>
 </div>
 
     <!-- Traits (minimizable) -->
@@ -181,8 +188,8 @@
         <button id="minimizeTraits" class="btn sec tiny" title="Minimize">━</button>
       </div>
       <div id="traitsContent">
-        <div class="row"><div class="label">Empathy (cool ↔ warm)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
         <div class="row"><div class="label">Logic (intuitive ↔ rational)</div><input id="logic" class="slider" type="range" min="0" max="5" step="1"><div id="numLog" class="num">2</div></div>
+        <div class="row"><div class="label">Empathy (cool ↔ warm)</div><input id="empathy" class="slider" type="range" min="0" max="5" step="1"><div id="numEmp" class="num">3</div></div>
         <div class="row"><div class="label">Playfulness (serious ↔ fun)</div><input id="play" class="slider" type="range" min="0" max="5" step="1"><div id="numPlay" class="num">3</div></div>
         <div class="row"><div class="label">Confidence (reserved ↔ bold)</div><input id="conf" class="slider" type="range" min="0" max="5" step="1"><div id="numConf" class="num">3</div></div>
       </div>
@@ -190,16 +197,26 @@
   </div>
 
   <!-- Chat -->
-<div class="card chatContainer" style="flex:1">
-    <div class="h2">Chat</div>
-    <div id="chat" class="chat"></div>
-    <div class="inputRow">
-      <input id="prompt" type="text" placeholder="Say something…" />
-      <button class="btn sec" id="clear">Clear Chat</button>
-      <button class="btn" id="send">▶</button>
-    </div>
+
+<div class="card chatContainer" style="flex:1; position:relative">
+  <div class="h2" style="display:flex; justify-content:space-between; align-items:center;">
+    Chat
+    <button class="btn sec iconBtn" id="clear" title="Clear Chat">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512" fill="currentColor">
+        <path d="M432 32H336l-16-32H192l-16 32H96v64h336V32zM112 128v352c0 17.7 14.3 32 32 32h224c17.7 0 32-14.3 32-32V128H112zm96 64h32v224h-32V192zm64 0h32v224h-32V192z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="chat" class="chat"></div>
+
+  <div class="inputRow">
+    <input id="prompt" type="text" placeholder="Say something…" />
+    <button class="btn" id="send">▶</button>
   </div>
 </div>
+
+
 
 <!-- Floating restore button (only visible when traits are minimized) -->
 <button id="restoreTraits" class="btn sec fab hidden" title="Show Traits">⚙</button>
@@ -284,24 +301,29 @@
       : `M92 142 H148`;
 
     // Responsive SVG (full-width on mobile, capped via CSS)
-    $("#avatar").innerHTML = `
-      <svg viewBox="0 0 240 240" role="img" aria-label="Glow avatar" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="ov-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
-            <stop offset="100%" stop-color="white" stop-opacity="0.02"/>
-          </linearGradient>
-          <filter id="f-${id}" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="${s.glow}" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="${s.fill}" filter="url(#f-${id})"/>
-        <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="url(#ov-${id})" pointer-events="none"/>
-        ${eye(90)} ${eye(150)}
-        <path d="${mouth}" stroke="#0b1020" stroke-width="10" stroke-linecap="round" fill="none"/>
-      </svg>
-    `;
+$("#avatar").innerHTML = `
+<svg width="288" height="288" viewBox="0 0 240 240" role="img" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="ov-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="white" stop-opacity="0.02"/>
+      </linearGradient>
+      <filter id="f-${id}" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="${s.glow}" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Scale everything to 80% and re-center -->
+    <g transform="translate(24,24) scale(0.8)">
+      <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="${s.fill}" filter="url(#f-${id})"/>
+      <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="url(#ov-${id})" pointer-events="none"/>
+      ${eye(90)} ${eye(150)}
+      <path d="${mouth}" stroke="#0b1020" stroke-width="10" stroke-linecap="round" fill="none"/>
+    </g>
+  </svg>
+`;
+
   }
 
   // --------- init traits + wire sliders ----------
