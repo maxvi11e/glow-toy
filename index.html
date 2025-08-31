@@ -34,7 +34,7 @@
     /* Avatar */
     .avatarCard{max-width:560px; width:100%}
     .avatarWrap{display:flex; flex-direction:column; align-items:center; user-select:none; width:100%}
-    .avatarWrap svg{width:100%; height:auto; max-width:560px}
+  .avatarWrap svg{width:64%; height:auto; max-width:448px; display:block; margin-left:auto; margin-right:auto;}
 
     /* Traits (match avatar width on desktop) */
     .traitsCard{max-width:560px; width:100%}
@@ -121,8 +121,6 @@
 </head>
 <body>
 <div class="wrap">
-
-  
   <!-- <div class="stack">
     <div class="h2">Parameterized LLM Assistant</div>
     <div class="tiny">Demo</div>
@@ -262,17 +260,19 @@
     const id = Math.random().toString(36).slice(2);
 
     const eye = (x) =>
-      s.eyes==="squares" ? `<rect x="${x-9}" y="92" width="18" height="18" rx="2" fill="#0b1020"/>` :
-      s.eyes==="ovals"   ? `<ellipse cx="${x}" cy="101" rx="9" ry="7.5" fill="#0b1020"/>` :
-                           `<circle cx="${x}" cy="101" r="7.5" fill="#0b1020"/>`;
+      s.eyes==="squares"
+        ? `<rect x="${x-9}" y="95.8" width="18" height="10.8" rx="2" fill="#0b1020"/>` // y=92+3.8, height=18*0.6=10.8
+        : s.eyes==="ovals"
+        ? `<ellipse cx="${x}" cy="101" rx="9" ry="7.5" fill="#0b1020"/>`
+        : `<circle cx="${x}" cy="101" r="7.5" fill="#0b1020"/>`;
 
     const mouth = s.smile
       ? `M80 ${145 - s.smileLift} Q120 ${145 + s.smileAmt - s.smileLift} 160 ${145 - s.smileLift}`
       : `M92 142 H148`;
 
-    // Responsive SVG (full-width on mobile, capped via CSS)
+    // Always use a circle for the avatar background
     $("#avatar").innerHTML = `
-      <svg width="288" height="288" viewBox="0 0 240 240" role="img" preserveAspectRatio="xMidYMid meet">
+  <svg width="230" height="230" viewBox="0 0 240 240" role="img" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="ov-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
@@ -285,8 +285,8 @@
         </defs>
         <!-- Scale everything to 80% and re-center -->
         <g transform="translate(24,24) scale(0.8)">
-          <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="${s.fill}" filter="url(#f-${id})"/>
-          <rect x="30" y="30" width="180" height="180" rx="${s.r}" fill="url(#ov-${id})" pointer-events="none"/>
+          <circle cx="120" cy="120" r="90" fill="${s.fill}" filter="url(#f-${id})"/>
+          <circle cx="120" cy="120" r="90" fill="url(#ov-${id})" pointer-events="none"/>
           ${eye(90)} ${eye(150)}
           <path d="${mouth}" stroke="#0b1020" stroke-width="10" stroke-linecap="round" fill="none"/>
         </g>
