@@ -32,9 +32,9 @@
     .hidden{display:none}
 
     /* Avatar */
-    .avatarCard{max-width:560px; width:100%}
+    .avatarCard{max-width:392px; width:100%} /* 30% smaller */
     .avatarWrap{display:flex; flex-direction:column; align-items:center; user-select:none; width:100%}
-  .avatarWrap svg{width:64%; height:auto; max-width:448px; display:block; margin-left:auto; margin-right:auto;}
+  .avatarWrap svg{width:44.8%; height:auto; max-width:313.6px; display:block; margin-left:auto; margin-right:auto;} /* 30% smaller */
 
     /* Traits (match avatar width on desktop) */
     .traitsCard{max-width:560px; width:100%}
@@ -146,13 +146,13 @@
         <button id="minimizeTraits" class="btn sec tiny" title="Minimize">━</button>
       </div>
       <div id="traitsContent">
+                <div class="row">
+          <div class="label">Empathy (cool ↔ warm)</div>
+          <input id="empathy" class="slider" type="range" min="0" max="5" step="1">
+        </div>
         <div class="row">
           <div class="label">Logic (intuitive ↔ rational)</div>
           <input id="logic" class="slider" type="range" min="0" max="5" step="1">
-        </div>
-        <div class="row">
-          <div class="label">Empathy (cool ↔ warm)</div>
-          <input id="empathy" class="slider" type="range" min="0" max="5" step="1">
         </div>
         <div class="row">
           <div class="label">Playfulness (serious ↔ fun)</div>
